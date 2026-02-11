@@ -1,0 +1,136 @@
+################################
+# Rust / Cargo
+################################
+
+# Compiled output
+/target/
+**/target/
+
+# Cargo lock (keep for binaries, ignore for libraries if needed)
+# Comment out if this is a binary workspace and you want to commit Cargo.lock
+# Cargo.lock
+
+# Backup files
+**/*.rs.bk
+
+# Rustfmt backups
+**/*.rs.orig
+
+
+################################
+# Node / TypeScript (VS Code extension)
+################################
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+out/
+build/
+coverage/
+
+# Package managers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Lockfiles (optional — keep if you want reproducible builds)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
+
+
+################################
+# VS Code Extension Packaging
+################################
+
+# VSIX packages
+*.vsix
+
+# Extension test artifacts
+.vscode-test/
+
+
+################################
+# VS Code Workspace Files
+################################
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+
+################################
+# OS Junk Files
+################################
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+
+################################
+# Logs & Temp Files
+################################
+
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+
+################################
+# Environment Files
+################################
+
+.env
+.env.*
+!.env.example
+
+
+################################
+# Demo / Media Artifacts
+################################
+
+# Demo videos & large artifacts
+demo/*.mp4
+demo/*.mov
+demo/*.avi
+
+# Generated reports
+*.json
+gas_report.json
+
+
+################################
+# Testing & Coverage
+################################
+
+coverage/
+*.lcov
+
+
+################################
+# Misc
+################################
+
+.idea/
+*.swp
+*.swo

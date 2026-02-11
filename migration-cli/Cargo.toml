@@ -1,0 +1,13 @@
+[package]
+name = "migration-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "stylus-migrate"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+
+

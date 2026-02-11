@@ -1,0 +1,21 @@
+[package]
+name = "test-runtime"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "test_runtime"
+path = "src/lib.rs"
+
+[[bin]]
+name = "stylus-test"
+path = "src/main.rs"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+debug-engine = { path = "../debug-engine" }
+serde_yaml = { workspace = true }
+

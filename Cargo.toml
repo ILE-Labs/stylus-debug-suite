@@ -1,0 +1,27 @@
+[workspace]
+members = [
+    "core-engine/model",
+    "core-engine/debug-engine",
+    "core-engine/gas-profiler",
+    "core-engine/test-runtime",
+    "debug-adapter",
+    "migration-cli",
+    "demo-runner",
+]
+
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+authors = ["Stylus Debug Suite"]
+repository = ""
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+thiserror = "1"
+anyhow = "1"
+serde_yaml = "0.9"
+

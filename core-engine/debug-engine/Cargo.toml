@@ -1,0 +1,22 @@
+[package]
+name = "debug-engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "debug_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "stylus-debug"
+path = "src/main.rs"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+gas-profiler = { path = "../gas-profiler" }
+engine-model = { path = "../model" }
+

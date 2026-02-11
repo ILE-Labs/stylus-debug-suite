@@ -1,0 +1,8 @@
+network: local
+fork: arbitrum-mainnet
+contracts:
+  - examples/demo-contracts/vault.rs
+scenarios:
+  - deposit_and_withdraw
+
+

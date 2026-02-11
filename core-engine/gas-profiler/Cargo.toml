@@ -1,0 +1,16 @@
+[package]
+name = "gas-profiler"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "gas_profiler"
+path = "src/lib.rs"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+engine-model = { path = "../model" }
+
+
