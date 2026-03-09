@@ -1,43 +1,38 @@
 # Stylus Debug Suite
 
-A local-first Stylus developer toolkit by **ILE Labs** for the Arbitrum ecosystem.
+A comprehensive toolkit for Arbitrum Stylus (Rust-based smart contracts) development, debugging, and migration.
 
-## Install
+Built by [ILE Labs](https://ilelabs.com).
 
-```bash
-cargo install stylus-debug
-```
+## Table of Contents
 
-Once installed, the `stylus-debug` CLI is available globally with three subcommands:
+- [Overview](#overview)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [CLI Reference](#cli-reference)
+- [Library Usage](#library-usage)
+- [Feature Details](#feature-details)
+- [Architecture](#architecture)
+- [License](#license)
 
-```bash
-stylus-debug migrate   # Analyze Solidity contracts for Stylus migration
-stylus-debug adapter   # Start the DAP-compatible debug adapter
-stylus-debug demo      # Run the Stylus VM demo with report generation
-```
+## Overview
 
-## What This Toolkit Does
+The Stylus Debug Suite provides essential tools for the next generation of smart contract development on Arbitrum Stylus:
 
-| Capability | Description |
-|---|---|
-| **Integration Test Runner** | **VM-backed** execution of contract scenarios with YAML-defined assertions. |
-| **Execution Trace** | Step-by-step opcode trace + memory snapshots, powered by a core simulation engine. |
-| **Gas Profiler** | Dynamic hotspot analysis from real traces with 5 contextual optimization tips. |
-| **Security Analysis** | Detects 5 patterns including reentrancy risk, unchecked calls, and gas-heavy loops. |
-| **Storage Snapshot** | Detailed ledger of storage changes (before/after) with change markers. |
-| **Migration Assistant** | **AST-based analysis** of Solidity files using `@solidity-parser/parser` for precise Stylus Rust equivalents. |
-| **Interactive Dashboard** | **Glassmorphism-styled** HTML report with a clickable Trace Explorer and Source Inspector. |
-| **DAP Protocol Hub** | **Engineering Ready**: Functional DAP server for direct IDE (VS Code) integration. |
+- **High-Fidelity VM Debugging**: Real `wasmtime` execution with DWARF source mapping.
+- **Smart Migration**: AST-based Solidity-to-Rust conversion guidance.
+- **Security First**: Automated trace analysis for reentrancy, CEI violations, and gas-heavy patterns.
+- **Actionable Profiling**: Deep gas hotspot analysis with contextual optimization tips.
 
-## Quick Start
+## Installation
 
-### Install from crates.io
+### Globally via crates.io
 
 ```bash
 cargo install stylus-debug
 ```
 
-### Or build from source
+### From source
 
 ```bash
 git clone https://github.com/ILE-Labs/stylus-debug-suite.git
@@ -45,63 +40,105 @@ cd stylus-debug-suite
 cargo install --path stylus-debug
 ```
 
-### Usage
+## Quick Start
+
+Run the end-to-end demo to see the suite in action:
 
 ```bash
-# Run the full end-to-end demo
 stylus-debug demo
-
-# Export a self-contained HTML report
-stylus-debug demo --export report.html
-
-# Analyze your own Solidity contracts
-stylus-debug migrate path/to/Contract.sol --verbose
-
-# Start the DAP-compatible debug adapter (for IDE integration)
-stylus-debug adapter
 ```
 
-### Development (from source)
+Export a visual report:
 
 ```bash
-# Build the full workspace
-cargo build
-
-# Run tests
-cargo test
-
-# Run the demo directly from workspace
-cargo run -p stylus-debug -- demo
-
-# Analyze Solidity contracts
-cargo run -p stylus-debug -- migrate path/to/Contract.sol --verbose
+stylus-debug demo --export report.html
 ```
 
-## Workspace Layout
+## CLI Reference
 
-| Crate | Purpose |
-|---|---|
-| `stylus-debug` | **CLI entrypoint** — unified binary with `migrate`, `adapter`, and `demo` subcommands. |
-| `core-engine/debug-engine` | **Core VM**: stack-based simulator and security analyzer engine. |
-| `core-engine/test-runtime` | **Assertion Engine**: YAML-driven testing with post-execution validation. |
-| `core-engine/gas-profiler` | **Profiler**: Opcode aggregation and Stylus-specific efficiency tips. |
-| `core-engine/model` | Shared data structures (events, storage diffs, config). |
-| `migration-cli` | **Analyzer**: AST-Based transformation engine for Solidity → Stylus (Rust) guidance. |
-| `debug-adapter` | **DAP server**: standalone Debug Adapter Protocol adapter. |
-| `examples/demo-contracts` | Example Solidity/Rust contracts + structured test config. |
-| `vscode-extension` | Demo VS Code extension shell for IDE integration. |
+The unified `stylus-debug` binary provides the following commands:
 
-## What the Demo Shows
+### `stylus-debug migrate [INPUT]`
 
-When you run `stylus-debug demo`, you will see:
+Analyzes Solidity source files and provides high-fidelity Rust/Stylus equivalents.
 
-1. **Integration tests** — VM-executed scenarios with structured pass/fail assertion results.
-2. **Execution trace** — A live-computed trace showing opcodes, stack state, and storage diffs.
-3. **Gas profiler** — Visual distribution of gas usage and tailored optimization suggestions.
-4. **Security analysis** — Detections for reentrancy risk, unchecked calls, and CEI pattern violations.
-5. **Storage snapshot** — Comparison of initial vs final values for every modified storage slot.
-6. **Migration assistant** — Mapping of detected Solidity patterns to Stylus equivalents using real AST parsing.
+- **Arguments**:
+  - `INPUT`: Path to the `.sol` file (optional, defaults to `examples/demo-contracts/Demo.sol`).
+- **Options**:
+  - `--format <format>`: Output format (`text` or `json`).
+  - `--verbose`: Shows matched source lines and line numbers.
+
+### `stylus-debug adapter`
+
+Starts a Debug Adapter Protocol (DAP) server on `stdio`.
+
+- **Options**:
+  - `--port <port>`: Port for the DAP server (currently `stdio` by default).
+
+### `stylus-debug demo`
+
+Runs a pre-defined debug scenario through the Stylus VM.
+
+- **Options**:
+  - `--export <path>`: Path to export the HTML report (e.g., `report.html`).
+
+## Library Usage
+
+You can also use the suite's core logic as a library in your own Rust projects. Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+stylus-debug = "0.1.0"
+```
+
+### Example: Running a Debug Session
+
+```rust
+use stylus_debug::{DebugSession, DebugConfig};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let config = DebugConfig {
+        contract_path: "path/to/contract.rs".into(),
+        entrypoint: "my_function".into(),
+        breakpoints: vec!["contract.rs:42".into()],
+    };
+
+    let mut session = DebugSession::new(config);
+    
+    // Step-by-step execution
+    while session.step() {
+        println!("PC: {}", session.vm().current_ptr());
+    }
+
+    Ok(())
+}
+```
+
+## Feature Details
+
+### 🛡️ Security Analysis
+Automatically detects 5 core vulnerability patterns in execution traces:
+- **Reentrancy**: External `CALL` after `SSTORE` without a guard.
+- **Unchecked Calls**: `CALL` operations not followed by status checks.
+- **CEI Violations**: Non-standard Checks-Effects-Interactions flows.
+- **Gas Inefficiencies**: Redundant `SSTORE` and large loops.
+
+### ⛽ Gas Profiling
+Provides a breakdown of gas consumption by opcode and contract function, highlighting expensive hotspots and offering Stylus-specific optimizations (e.g., caching storage in memory).
+
+### 🔍 DWARF Debugging
+Leverages `gimli` to parse DWARF debug information from WASM binaries, enabling accurate source-to-PC mapping and a real-world debugging experience.
+
+## Architecture
+
+The suite is modularized into several crates:
+
+- `stylus-debug`: Unified CLI entrypoint.
+- `debug-engine`: Core VM execution engine and analyzer.
+- `engine-model`: Shared data structures.
+- `gas-profiler`: Gas analysis and optimization.
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
