@@ -11,6 +11,7 @@ readme = "../README.md"
 keywords = ["arbitrum", "stylus", "debug", "wasm", "smart-contracts"]
 categories = ["command-line-utilities", "development-tools::debugging"]
 exclude = ["tests/", "examples/"]
+publish = true
 
 [[bin]]
 name = "stylus-debug"
@@ -28,6 +29,6 @@ gimli = "0.27"
 object = "0.30"
 
 # Internal workspace crates
-debug-engine = { path = "../core-engine/debug-engine" }
-gas-profiler = { path = "../core-engine/gas-profiler" }
-engine-model = { path = "../core-engine/model" }
+debug-engine = { version = "0.1.0", path = "../core-engine/debug-engine" }
+gas-profiler = { version = "0.1.0", path = "../core-engine/gas-profiler" }
+engine-model = { version = "0.1.0", path = "../core-engine/model" }

@@ -1,7 +1,12 @@
 [package]
 name = "engine-model"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Shared data models for the Stylus Debug Suite execution engine."
+publish = true
 
 [lib]
 name = "engine_model"
@@ -10,5 +15,3 @@ path = "src/lib.rs"
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-
-
