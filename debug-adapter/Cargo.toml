@@ -12,6 +12,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
+gimli = "0.27"
+object = "0.30"
 debug-engine = { path = "../core-engine/debug-engine" }
 gas-profiler = { path = "../core-engine/gas-profiler" }
 

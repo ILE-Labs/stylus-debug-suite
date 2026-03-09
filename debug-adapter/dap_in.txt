@@ -1,0 +1,8 @@
+{"seq": 1, "type": "request", "command": "initialize", "arguments": {}}
+{"seq": 2, "type": "request", "command": "launch", "arguments": {"contractPath": "vault.rs"}}
+{"seq": 3, "type": "request", "command": "stackTrace", "arguments": {}}
+{"seq": 4, "type": "request", "command": "next", "arguments": {}}
+{"seq": 5, "type": "request", "command": "stackTrace", "arguments": {}}
+{"seq": 6, "type": "request", "command": "scopes", "arguments": {}}
+{"seq": 7, "type": "request", "command": "variables", "arguments": {"variablesReference": 1001}}
+{"seq": 8, "type": "request", "command": "disconnect", "arguments": {}}

@@ -2,7 +2,37 @@ network: local
 fork: arbitrum-mainnet
 contracts:
   - examples/demo-contracts/vault.rs
+
 scenarios:
-  - deposit_and_withdraw
+  - name: deposit_and_withdraw
+    description: "Deposit 100 wei then withdraw 50 wei — balance should be 50"
+    params:
+      deposit_amount: 100
+      withdraw_amount: 50
+    assertions:
+      - type: not_reverted
+        expected: "false"
+      - type: storage_eq
+        slot: balance
+        expected: "0x32"
 
+  - name: overflow_withdraw
+    description: "Deposit 10 wei then attempt to withdraw 255 — should revert"
+    params:
+      deposit_amount: 10
+      withdraw_amount: 255
+    assertions:
+      - type: reverted
+        expected: "true"
 
+  - name: double_deposit
+    description: "Two deposits (50 + 75) without withdrawal — balance should be 125"
+    params:
+      deposit_amount: 50
+      withdraw_amount: 75
+    assertions:
+      - type: not_reverted
+        expected: "false"
+      - type: storage_eq
+        slot: balance
+        expected: "0x7D"

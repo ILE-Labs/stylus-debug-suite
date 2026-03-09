@@ -17,6 +17,7 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
 tokio = { workspace = true }
+wasmtime = "1.0"
 gas-profiler = { path = "../gas-profiler" }
 engine-model = { path = "../model" }
 

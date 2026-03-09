@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stylus Debug Suite Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #030712;
+    --surface: rgba(17, 24, 39, 0.7);
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.3);
+    --text: #f3f4f6;
+    --text-muted: #9ca3af;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --glass-blur: blur(12px);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { 
+    background: var(--bg);
+    background-image: radial-gradient(circle at 50% -20%, #1e1b4b, transparent);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    padding: 3rem;
+    min-height: 100vh;
+  }
+  .glass-card {
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.5rem; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--accent); display: flex; align-items: center; gap: 0.75rem; }
+  h2::before { content: ''; display: inline-block; width: 4px; height: 1.5rem; background: var(--accent); border-radius: 2px; }
+  .header { margin-bottom: 4rem; position: relative; }
+  .badge { background: var(--accent-glow); color: var(--accent); padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+  
+  table { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; margin: 1rem 0; }
+  th { text-align: left; padding: 1rem; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 1.25rem 1rem; background: rgba(255,255,255,0.03); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  td:first-child { border-left: 1px solid var(--border); border-top-left-radius: 1rem; border-bottom-left-radius: 1rem; }
+  td:last-child { border-right: 1px solid var(--border); border-top-right-radius: 1rem; border-bottom-right-radius: 1rem; }
+  
+  .status-badge { padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; }
+  .status-badge.pass { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); }
+  .status-badge.fail { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.2); }
+  
+  code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: rgba(0,0,0,0.3); padding: 0.2rem 0.5rem; border-radius: 0.5rem; }
+  .opcode-tag { color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); }
+  .rust-code { color: var(--accent); }
+  
+  .trace-row { cursor: pointer; transition: all 0.2s; }
+  .trace-row:hover { background: rgba(59, 130, 246, 0.1); transform: translateX(4px); }
+  
+  .progress-container { background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden; }
+  .progress-bar { background: var(--accent); height: 100%; border-radius: 4px; box-shadow: 0 0 10px var(--accent-glow); }
+  
+  .finding-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+  .finding-card { padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform 0.2s; }
+  .finding-card:hover { transform: translateY(-5px); }
+  .finding-card.sev-critical { border-color: var(--red); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), transparent); }
+  .finding-card.sev-warning { border-color: var(--yellow); background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent); }
+  .finding-card.sev-info { border-color: var(--accent); background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent); }
+  .sev-badge { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; margin-bottom: 0.75rem; display: inline-block; }
+  .sev-critical .sev-badge { background: var(--red); color: #fff; }
+  .sev-warning .sev-badge { background: var(--yellow); color: #000; }
+  .sev-info .sev-badge { background: var(--accent); color: #fff; }
+  
+  .suggestion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .suggestion-card { background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: 1rem; border: 1px solid var(--border); font-size: 0.9rem; position: relative; padding-left: 3rem; }
+  .suggestion-card::before { content: '💡'; position: absolute; left: 1rem; top: 1.25rem; font-size: 1.2rem; }
+  
+  .storage-cell { font-size: 0.8rem; line-height: 1.4; }
+  .storage-change { margin-bottom: 0.5rem; }
+  .storage-change strong { color: var(--yellow); }
+  
+  .inspector { position: fixed; right: 2rem; bottom: 2rem; width: 400px; max-height: 500px; background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--accent); border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: none; z-index: 100; }
+  .inspector h3 { margin-bottom: 1rem; color: var(--accent); font-size: 1.1rem; }
+  .inspector-list { list-style: none; font-size: 0.85rem; }
+  .inspector-list li { padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+  .inspector-list li span:last-child { color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+  
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .glass-card { animation: fadeIn 0.6s ease-out forwards; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="badge">Experimental POC</span>
+  <h1>Stylus Debug Suite Dashboard</h1>
+  <p style="color:var(--text-muted); font-size:1.1rem; max-width:600px;">
+    Advanced developer toolkit for Arbitrum Stylus. Automated testing, gas-aware profiling, and security-first trace analysis.
+  </p>
+</div>
+
+<section class="glass-card">
+  <h2>Integration Test Scenarios</h2>
+  <table>
+    <thead>
+      <tr><th>Capability / Scenario</th><th>Status</th><th>Events</th><th>Assertion Pipeline</th></tr>
+    </thead>
+    <tbody>
+      <tr class="glass-row">
+                    <td><div class="test-name">deposit_and_withdraw</div><div class="test-desc">Deposit 100 wei then withdraw 50 wei — balance should be 50</div></td>
+                    <td><span class="status-badge pass">PASS ✓</span></td>
+                    <td>18</td>
+                    <td><div class="assertion-item pass">✓ transaction should succeed</div><div class="assertion-item pass">✓ storage[balance] == 0x32</div></td>
+                </tr>
+<tr class="glass-row">
+                    <td><div class="test-name">overflow_withdraw</div><div class="test-desc">Deposit 10 wei then attempt to withdraw 255 — should revert</div></td>
+                    <td><span class="status-badge pass">PASS ✓</span></td>
+                    <td>11</td>
+                    <td><div class="assertion-item pass">✓ reverted == true</div></td>
+                </tr>
+<tr class="glass-row">
+                    <td><div class="test-name">double_deposit</div><div class="test-desc">Two deposits (50 + 75) without withdrawal — balance should be 125</div></td>
+                    <td><span class="status-badge pass">PASS ✓</span></td>
+                    <td>14</td>
+                    <td><div class="assertion-item pass">✓ transaction should succeed</div><div class="assertion-item pass">✓ storage[balance] == 0x7D</div></td>
+                </tr>
+    </tbody>
+  </table>
+</section>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem;">
+  <section class="glass-card">
+    <h2>Execution Trace Explorer</h2>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Click any step to inspect machine state.</p>
+    <table>
+      <thead>
+        <tr><th>Step</th><th>Opcode</th><th>Gas</th><th>Stack</th><th>Source</th><th>State Mutations</th></tr>
+      </thead>
+      <tbody>
+        <tr class="trace-row" onclick="inspectStep(0, 'let amount = msg::value();', 1, 3, 3999997)">
+                    <td>0</td>
+                    <td><code class="opcode-tag">PUSH</code></td>
+                    <td>3</td>
+                    <td>1</td>
+                    <td><code class="rust-code">let amount = msg::value();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(1, 'contract.deposit();', 1, 700, 3999297)">
+                    <td>1</td>
+                    <td><code class="opcode-tag">CALL</code></td>
+                    <td>700</td>
+                    <td>1</td>
+                    <td><code class="rust-code">contract.deposit();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(2, 'let current = balance;', 2, 2100, 3997197)">
+                    <td>2</td>
+                    <td><code class="opcode-tag">SLOAD</code></td>
+                    <td>2100</td>
+                    <td>2</td>
+                    <td><code class="rust-code">let current = balance;</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(3, 'let amount = msg::value();', 3, 3, 3997194)">
+                    <td>3</td>
+                    <td><code class="opcode-tag">PUSH</code></td>
+                    <td>3</td>
+                    <td>3</td>
+                    <td><code class="rust-code">let amount = msg::value();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(4, 'a + b', 2, 3, 3997191)">
+                    <td>4</td>
+                    <td><code class="opcode-tag">ADD</code></td>
+                    <td>3</td>
+                    <td>2</td>
+                    <td><code class="rust-code">a + b</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(5, 'balance += amount;', 1, 20000, 3977191)">
+                    <td>5</td>
+                    <td><code class="opcode-tag">SSTORE</code></td>
+                    <td>20000</td>
+                    <td>1</td>
+                    <td><code class="rust-code">balance += amount;</code></td>
+                    <td><div class="storage-cell"><div class="storage-change"><strong>balance</strong>: ∅ → 0x64</div></div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(6, 'emit Deposited(msg::sender(), amount);', 1, 375, 3976816)">
+                    <td>6</td>
+                    <td><code class="opcode-tag">LOG</code></td>
+                    <td>375</td>
+                    <td>1</td>
+                    <td><code class="rust-code">emit Deposited(msg::sender(), amount);</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(7, 'let amount = msg::value();', 2, 3, 3976813)">
+                    <td>7</td>
+                    <td><code class="opcode-tag">PUSH</code></td>
+                    <td>3</td>
+                    <td>2</td>
+                    <td><code class="rust-code">let amount = msg::value();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(8, 'contract.withdraw();', 2, 700, 3976113)">
+                    <td>8</td>
+                    <td><code class="opcode-tag">CALL</code></td>
+                    <td>700</td>
+                    <td>2</td>
+                    <td><code class="rust-code">contract.withdraw();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(9, 'let current = balance;', 3, 2100, 3974013)">
+                    <td>9</td>
+                    <td><code class="opcode-tag">SLOAD</code></td>
+                    <td>2100</td>
+                    <td>3</td>
+                    <td><code class="rust-code">let current = balance;</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(10, 'let amount = msg::value();', 4, 3, 3974010)">
+                    <td>10</td>
+                    <td><code class="opcode-tag">PUSH</code></td>
+                    <td>3</td>
+                    <td>4</td>
+                    <td><code class="rust-code">let amount = msg::value();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(11, 'let current = balance;', 5, 100, 3973910)">
+                    <td>11</td>
+                    <td><code class="opcode-tag">SLOAD</code></td>
+                    <td>100</td>
+                    <td>5</td>
+                    <td><code class="rust-code">let current = balance;</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(12, 'let amount = msg::value();', 6, 3, 3973907)">
+                    <td>12</td>
+                    <td><code class="opcode-tag">PUSH</code></td>
+                    <td>3</td>
+                    <td>6</td>
+                    <td><code class="rust-code">let amount = msg::value();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(13, 'a - b', 5, 3, 3973904)">
+                    <td>13</td>
+                    <td><code class="opcode-tag">SUB</code></td>
+                    <td>3</td>
+                    <td>5</td>
+                    <td><code class="rust-code">a - b</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(14, 'balance += amount;', 4, 5000, 3968904)">
+                    <td>14</td>
+                    <td><code class="opcode-tag">SSTORE</code></td>
+                    <td>5000</td>
+                    <td>4</td>
+                    <td><code class="rust-code">balance += amount;</code></td>
+                    <td><div class="storage-cell"><div class="storage-change"><strong>balance</strong>: 0x64 → 0x32</div></div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(15, 'let amount = msg::value();', 5, 3, 3968901)">
+                    <td>15</td>
+                    <td><code class="opcode-tag">PUSH</code></td>
+                    <td>3</td>
+                    <td>5</td>
+                    <td><code class="rust-code">let amount = msg::value();</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(16, 'msg::sender().transfer(amount);', 4, 9000, 3959901)">
+                    <td>16</td>
+                    <td><code class="opcode-tag">CALL</code></td>
+                    <td>9000</td>
+                    <td>4</td>
+                    <td><code class="rust-code">msg::sender().transfer(amount);</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+<tr class="trace-row" onclick="inspectStep(17, 'emit Deposited(msg::sender(), amount);', 4, 375, 3959526)">
+                    <td>17</td>
+                    <td><code class="opcode-tag">LOG</code></td>
+                    <td>375</td>
+                    <td>4</td>
+                    <td><code class="rust-code">emit Deposited(msg::sender(), amount);</code></td>
+                    <td><div class="storage-cell">—</div></td>
+                </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div>
+    <section class="glass-card">
+      <h2>Gas Hotspots</h2>
+      <table>
+        <thead>
+          <tr><th>Opcode</th><th>Gas</th><th>%</th><th>Load</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+                    <td><code class="opcode-tag">SSTORE</code></td>
+                    <td>25000</td>
+                    <td>61.8%</td>
+                    <td width="200"><div class="progress-container"><div class="progress-bar" style="width:61.768047%"></div></div></td>
+                </tr>
+<tr>
+                    <td><code class="opcode-tag">CALL</code></td>
+                    <td>10400</td>
+                    <td>25.7%</td>
+                    <td width="200"><div class="progress-container"><div class="progress-bar" style="width:25.695509%"></div></div></td>
+                </tr>
+<tr>
+                    <td><code class="opcode-tag">SLOAD</code></td>
+                    <td>4300</td>
+                    <td>10.6%</td>
+                    <td width="200"><div class="progress-container"><div class="progress-bar" style="width:10.6241045%"></div></div></td>
+                </tr>
+<tr>
+                    <td><code class="opcode-tag">LOG</code></td>
+                    <td>750</td>
+                    <td>1.9%</td>
+                    <td width="200"><div class="progress-container"><div class="progress-bar" style="width:1.8530414%"></div></div></td>
+                </tr>
+<tr>
+                    <td><code class="opcode-tag">PUSH</code></td>
+                    <td>18</td>
+                    <td>0.0%</td>
+                    <td width="200"><div class="progress-container"><div class="progress-bar" style="width:0.044472996%"></div></div></td>
+                </tr>
+<tr>
+                    <td><code class="opcode-tag">SUB</code></td>
+                    <td>3</td>
+                    <td>0.0%</td>
+                    <td width="200"><div class="progress-container"><div class="progress-bar" style="width:0.007412166%"></div></div></td>
+                </tr>
+<tr>
+                    <td><code class="opcode-tag">ADD</code></td>
+                    <td>3</td>
+                    <td>0.0%</td>
+                    <td width="200"><div class="progress-container"><div class="progress-bar" style="width:0.007412166%"></div></div></td>
+                </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="glass-card">
+      <h2>Optimization Insights</h2>
+      <div class="suggestion-grid">
+        <div class="suggestion-card">Detected 2 SSTORE operations. Batch storage writes where possible to reduce per-write overhead (each cold SSTORE costs ~20,000 gas).</div>
+<div class="suggestion-card">Detected 3 SLOAD operation(s). Cache storage reads in local variables when the same slot is read more than once to avoid redundant cold reads (~2,100 gas each).</div>
+<div class="suggestion-card">Detected 3 external CALL operations. Consider consolidating external calls to reduce base call overhead (~700 gas per call) and re-entrancy surface.</div>
+<div class="suggestion-card">Detected 2 LOG event(s). While events are cheap relative to storage, avoid emitting large event payloads in loops to keep gas predictable.</div>
+<div class="suggestion-card">Stylus tip: prefer in-memory computation over repeated storage access. Stylus WASM execution is ~10x cheaper than EVM per CPU cycle, but storage costs remain L1-equivalent.</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="glass-card">
+  <h2>Trace-Based Security Findings</h2>
+  <div class="finding-grid">
+    <div class="finding-card sev-warning">
+                    <div class="finding-header">
+                        <span class="sev-badge">WARNING</span>
+                        <strong>No revert guards detected</strong>
+                    </div>
+                    <div class="finding-body">Detected 3 external CALL(s) but no REVERT/require guards in the trace. Ensure all external call return values are checked to prevent silent failures.</div>
+                    
+                </div>
+<div class="finding-card sev-info">
+                    <div class="finding-header">
+                        <span class="sev-badge">INFO</span>
+                        <strong>High storage write gas proportion</strong>
+                    </div>
+                    <div class="finding-body">Storage writes consume 61.8% of total gas (25000 / 40474 gas). In Stylus, storage operations remain L1-priced while computation is ~10x cheaper. Consider caching intermediate values in memory.</div>
+                    
+                </div>
+<div class="finding-card sev-info">
+                    <div class="finding-header">
+                        <span class="sev-badge">INFO</span>
+                        <strong>Slot `balance` written 2 times</strong>
+                    </div>
+                    <div class="finding-body">Storage slot `balance` was written 2 times in a single execution. Each redundant SSTORE costs gas. Consider computing the final value in memory and writing once.</div>
+                    
+                </div>
+  </div>
+</section>
+
+<section class="glass-card">
+  <h2>Solidity → Stylus Migration Assistant</h2>
+  <table>
+    <thead>
+      <tr><th>Solidity Pattern</th><th>Stylus Rust Equivalent</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr class="glass-row">
+                    <td><code>uint256 public balance</code></td>
+                    <td><code class="rust-code">sol_storage! { balance: StorageU256 }</code></td>
+                    <td>State variable → StorageU256</td>
+                </tr>
+<tr class="glass-row">
+                    <td><code>msg.sender</code></td>
+                    <td><code class="rust-code">msg::sender()</code></td>
+                    <td>Caller address → SDK function</td>
+                </tr>
+<tr class="glass-row">
+                    <td><code>msg.value</code></td>
+                    <td><code class="rust-code">msg::value()</code></td>
+                    <td>Attached value → SDK function</td>
+                </tr>
+<tr class="glass-row">
+                    <td><code>require(cond, reason)</code></td>
+                    <td><code class="rust-code">if !cond { return Err(...) }</code></td>
+                    <td>Require → Rust Result</td>
+                </tr>
+<tr class="glass-row">
+                    <td><code>event Deposited(...)</code></td>
+                    <td><code class="rust-code">sol! { event Deposited(...); }</code></td>
+                    <td>Events → sol! macro</td>
+                </tr>
+<tr class="glass-row">
+                    <td><code>external payable</code></td>
+                    <td><code class="rust-code">#[payable] fn deposit()</code></td>
+                    <td>Payable → #[payable] attribute</td>
+                </tr>
+<tr class="glass-row">
+                    <td><code>address.call{value}("")</code></td>
+                    <td><code class="rust-code">call::Call::new().value(amt)</code></td>
+                    <td>Low-level call → Call builder</td>
+                </tr>
+    </tbody>
+  </table>
+</section>
+
+<div id="inspector" class="inspector">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h3>Step Inspector</h3>
+    <button onclick="document.getElementById('inspector').style.display='none'" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5rem;">&times;</button>
+  </div>
+  <div id="inspector-content"></div>
+</div>
+
+<script>
+  function inspectStep(step, snippet, stackDepth, gasUsed, gasRemaining) {
+    const inspector = document.getElementById('inspector');
+    const content = document.getElementById('inspector-content');
+    inspector.style.display = 'block';
+    
+    content.innerHTML = `
+      <ul class="inspector-list">
+        <li><span>Instruction ID</span> <span>#${step}</span></li>
+        <li><span>Execution Frame</span> <span>0x42...f6</span></li>
+        <li><span>Stack Depth</span> <span>${stackDepth}</span></li>
+        <li><span>Gas Used (Step)</span> <span>${gasUsed.toLocaleString()}</span></li>
+        <li><span>Gas Remaining</span> <span>${gasRemaining.toLocaleString()}</span></li>
+      </ul>
+      <div style="margin-top:1.5rem; padding:1rem; background:rgba(0,0,0,0.4); border-radius:0.5rem;">
+        <div style="font-size:0.7rem; color:var(--accent); margin-bottom:0.5rem; text-transform:uppercase;">Source Snippet</div>
+        <code style="display:block; color:var(--green);">${snippet}</code>
+      </div>
+    `;
+  }
+</script>
+
+<footer style="margin-top:2rem; font-size:0.8rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
+  <div>Generated by Stylus Debug Suite · <strong>ILE Labs</strong></div>
+  <div>2026-03-09 10:03:58 · Arbitrum Stylus Alpha</div>
+</footer>
+
+</body>
+</html>

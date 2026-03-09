@@ -5,9 +5,12 @@ use serde::{Deserialize, Serialize};
 pub struct ExecutionEvent {
     pub step: u64,
     pub opcode: String,
+    /// Gas consumed by this individual operation.
+    pub gas_used: u64,
     pub stack: Vec<Value>,
     pub memory: MemorySnapshot,
     pub storage_diff: Vec<StorageChange>,
+    pub source_line: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,5 +38,3 @@ pub struct DebugConfig {
     /// Optional breakpoints expressed as "file:line" or symbolic form.
     pub breakpoints: Vec<String>,
 }
-
-

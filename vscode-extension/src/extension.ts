@@ -199,7 +199,7 @@ function renderDashboardHtml(responses: Record<string, AnyJson>) {
 
   const gasBlock = gas
     ? `<div class="card">
-        <h2>Gas Report (synthetic)</h2>
+        <h2>Gas Report (Wasmtime Fuel)</h2>
         <div class="kv"><span>Function</span><span>${escapeHtml(String(gas.function ?? ""))}</span></div>
         <div class="kv"><span>Total gas</span><span>${escapeHtml(String(gas.total_gas ?? ""))}</span></div>
         <h3>Hotspots</h3>
@@ -207,7 +207,7 @@ function renderDashboardHtml(responses: Record<string, AnyJson>) {
         <h3>Suggestions</h3>
         <pre>${escapeHtml(JSON.stringify(gas.suggestions ?? [], null, 2))}</pre>
       </div>`
-    : `<div class="card"><h2>Gas Report</h2><p>No data.</p></div>`;
+    : `<div class="card"><h2>Gas Report</h2><p>${responses["initialize"] ? "Pending — VM not connected" : "No data."}</p></div>`;
 
   return `<!doctype html>
   <html>

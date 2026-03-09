@@ -2,46 +2,54 @@
 // without also having to depend on `engine-model` directly.
 pub use engine_model::{DebugConfig, ExecutionEvent, MemorySnapshot, StorageChange, Value};
 
-/// Represents a running debug session.
+pub mod vm;
+pub mod analysis;
+
+use vm::{ScenarioCompiler, ScenarioParams, StylusVm, VmResult};
+
+/// Represents a running debug session backed by the StylusVm.
 pub struct DebugSession {
     pub config: DebugConfig,
+    vm: StylusVm,
 }
 
 impl DebugSession {
-    /// Create a new debug session from a configuration.
     pub fn new(config: DebugConfig) -> Self {
-        Self { config }
+        let vm = StylusVm::new();
+        let mut session = Self { config, vm };
+        let _ = session.load_scenario_with_params(&ScenarioParams::default());
+        session
     }
 
-    /// Run the contract and yield a synthetic execution trace.
-    ///
-    /// For the demo, this is stubbed out to emit a handful of fake events;
-    /// the API is shaped to later wrap real Stylus execution.
-    pub fn run(&self) -> anyhow::Result<Vec<ExecutionEvent>> {
-        let mut events = Vec::new();
+    pub fn load_scenario_with_params(&mut self, params: &ScenarioParams) -> anyhow::Result<()> {
+        let instructions = ScenarioCompiler::compile(&self.config.entrypoint, params)
+            .map_err(|e| anyhow::anyhow!(e))?;
+        self.vm.load_instructions(instructions);
+        Ok(())
+    }
 
-        events.push(ExecutionEvent {
-            step: 0,
-            opcode: "PUSH".into(),
-            stack: vec![Value { hex: "0x01".into() }],
-            memory: MemorySnapshot { bytes: vec![] },
-            storage_diff: vec![],
-        });
+    /// Load a WASM contract into the session.
+    pub fn load_contract(&mut self, bytes: &[u8]) -> anyhow::Result<()> {
+        self.vm.load_contract(bytes)
+    }
 
-        events.push(ExecutionEvent {
-            step: 1,
-            opcode: "SSTORE".into(),
-            stack: vec![Value { hex: "0x01".into() }, Value { hex: "0x10".into() }],
-            memory: MemorySnapshot { bytes: vec![] },
-            storage_diff: vec![StorageChange {
-                key: "slot_0".into(),
-                old: None,
-                new: Some("0x10".into()),
-            }],
-        });
+    /// Advance the VM by one instruction.
+    pub fn step(&mut self) -> bool {
+        self.vm.step()
+    }
 
-        Ok(events)
+    /// Run the contract scenario through the VM and return the execution trace.
+    pub fn run(&mut self) -> anyhow::Result<VmResult> {
+        while self.step() {}
+        Ok(VmResult {
+            trace: self.vm.trace().to_vec(),
+            final_storage: self.vm.storage().clone(),
+            reverted: self.vm.is_reverted(),
+            revert_reason: None, // Simplified for now
+        })
+    }
+
+    pub fn vm(&self) -> &StylusVm {
+        &self.vm
     }
 }
-
-

@@ -9,10 +9,15 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
+clap = { version = "4", features = ["derive"] }
 engine-model = { path = "../core-engine/model" }
+debug-engine = { path = "../core-engine/debug-engine" }
 test-runtime = { path = "../core-engine/test-runtime" }
 gas-profiler = { path = "../core-engine/gas-profiler" }
-
-
+serde_yaml = { workspace = true }
+colored = { workspace = true }
+indicatif = { workspace = true }
+chrono = { workspace = true }

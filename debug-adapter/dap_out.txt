@@ -1,0 +1,8 @@
+{"seq":1,"type":"response","request_seq":1,"success":true,"command":"initialize","body":{"supportsConfigurationDoneRequest":true,"supportsEvaluateForHovers":false,"supportsRestartRequest":true,"supportsStepBack":false}}
+{"seq":2,"type":"response","request_seq":2,"success":true,"command":"launch","body":{"contract":"vault.rs","status":"launched"}}
+{"seq":3,"type":"response","request_seq":3,"success":true,"command":"stackTrace","body":{"stackFrames":[{"column":0,"id":1,"line":10,"name":"deposit_and_withdraw","source":{"name":"vault.rs","path":"examples/demo-contracts/vault.rs"}}],"totalFrames":1}}
+{"seq":4,"type":"response","request_seq":4,"success":true,"command":"next","body":{"stepped":true}}
+{"seq":5,"type":"response","request_seq":5,"success":true,"command":"stackTrace","body":{"stackFrames":[{"column":0,"id":1,"line":11,"name":"deposit_and_withdraw","source":{"name":"vault.rs","path":"examples/demo-contracts/vault.rs"}}],"totalFrames":1}}
+{"seq":6,"type":"response","request_seq":6,"success":true,"command":"scopes","body":{"scopes":[{"expensive":false,"name":"Stack","variablesReference":1001},{"expensive":true,"name":"Storage","variablesReference":1002}]}}
+{"seq":7,"type":"response","request_seq":7,"success":true,"command":"variables","body":{"variables":[{"name":"stack[0]","type":"U256","value":"0x64"}]}}
+{"seq":8,"type":"response","request_seq":8,"success":true,"command":"disconnect","body":{"status":"bye"}}

@@ -3,11 +3,10 @@ name = "migration-cli"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-name = "stylus-migrate"
-path = "src/main.rs"
-
 [dependencies]
 anyhow = { workspace = true }
-
-
+serde = { workspace = true }
+serde_json = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+regex = "1"
+colored = { workspace = true }
