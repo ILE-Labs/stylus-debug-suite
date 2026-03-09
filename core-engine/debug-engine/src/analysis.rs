@@ -96,7 +96,7 @@ fn check_reentrancy_cfg(cfg: &TraceCfg, findings: &mut Vec<SecurityFinding>) {
             if ev.opcode == "CALL" && ev.gas_used >= 9000 {
                 // If there's an SSTORE before this CALL, check if a guard is active
                 if let Some(sstore_step) = last_sstore {
-                    let guarded = active_guards.iter().any(|slot| {
+                    let guarded = active_guards.iter().any(|_slot| {
                         // A simple heuristic: if the slot was written, we assume it's a guard
                         true 
                     });

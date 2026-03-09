@@ -40,6 +40,17 @@ struct PcToSourceMap {
     map: HashMap<u32, SourceLocation>,
 }
 
+#[derive(Debug, Serialize)]
+struct StorageSlotView {
+    key: String,
+    value: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct StorageView {
+    slots: Vec<StorageSlotView>,
+}
+
 impl PcToSourceMap {
     fn new() -> Self {
         Self { map: HashMap::new() }
@@ -57,20 +68,20 @@ fn parse_dwarf(wasm_path: &str) -> Result<PcToSourceMap> {
     let bin_data = fs::read(wasm_path)?;
     let obj_file = object::File::parse(&*bin_data)?;
     
-    let load_section = |id: gimli::SectionId| -> Result<DefaultCow, gimli::Error> {
+    let load_section = |id: gimli::SectionId| -> Result<gimli::EndianSlice<'_, gimli::RunTimeEndian>, gimli::Error> {
         let name = id.name();
         match obj_file.section_by_name(name) {
-            Some(section) => Ok(section.cow_data().into()),
-            None => Ok(DefaultCow::new()),
+            Some(section) => Ok(gimli::EndianSlice::new(section.cow_data().as_ref(), gimli::RunTimeEndian::Little)),
+            None => Ok(gimli::EndianSlice::new(&[], gimli::RunTimeEndian::Little)),
         }
     };
 
-    let drown_sections = gimli::Dwarf::load(&load_section)?;
+    let dwarf_sections = gimli::Dwarf::load(&load_section)?;
     let mut pc_to_source = PcToSourceMap::new();
 
-    let mut iter = drown_sections.units();
+    let mut iter = dwarf_sections.units();
     while let Some(header) = iter.next()? {
-        let unit = drown_sections.unit(header)?;
+        let unit = dwarf_sections.unit(header)?;
         if let Some(program) = unit.line_program.clone() {
             let mut rows = program.rows();
             while let Some((header, row)) = rows.next_row()? {
@@ -78,7 +89,7 @@ fn parse_dwarf(wasm_path: &str) -> Result<PcToSourceMap> {
                     continue;
                 }
                 if let Some(file_entry) = row.file(header) {
-                    let file_name = drown_sections.attr_string(&unit, file_entry.path_name())?
+                    let file_name = dwarf_sections.attr_string(&unit, file_entry.path_name())?
                         .to_string_lossy()
                         .into_owned();
                     pc_to_source.map.insert(row.address() as u32, SourceLocation {
@@ -97,7 +108,7 @@ fn parse_dwarf(wasm_path: &str) -> Result<PcToSourceMap> {
     Ok(pc_to_source)
 }
 
-type DefaultCow = std::borrow::Cow<'static, [u8]>;
+type DefaultCow<'a> = std::borrow::Cow<'a, [u8]>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -108,7 +119,7 @@ async fn main() -> Result<()> {
     let mut stdout = io::stdout();
 
     let mut active_session: Option<DebugSession> = None;
-    let mut last_trace: Option<Vec<ExecutionEvent>> = None;
+    let _last_trace: Option<Vec<ExecutionEvent>> = None;
     let mut pc_map: PcToSourceMap = PcToSourceMap::new();
 
     for line in stdin.lock().lines() {
@@ -120,7 +131,7 @@ async fn main() -> Result<()> {
         let req: ProtocolRequest = match serde_json::from_str(&line) {
             Ok(r) => r,
             Err(err) => {
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<String> = ProtocolResponse {
                     seq: 0,
                     type_field: "response",
                     request_seq: 0,
@@ -144,7 +155,7 @@ async fn main() -> Result<()> {
                     "supportsStepBack": false,
                     "supportsRestartRequest": true,
                 });
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -170,7 +181,7 @@ async fn main() -> Result<()> {
                 };
                 active_session = Some(DebugSession::new(config));
 
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -181,7 +192,7 @@ async fn main() -> Result<()> {
                 writeln!(stdout, "{}", serde_json::to_string(&resp)?)?;
             }
             "setBreakpoints" => {
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -196,7 +207,7 @@ async fn main() -> Result<()> {
                 if let Some(session) = &mut active_session {
                     success = session.step();
                 }
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -224,7 +235,7 @@ async fn main() -> Result<()> {
                         "column": loc.map(|l| l.column).unwrap_or(0)
                     }));
                 } else {
-                    let resp = ProtocolResponse {
+                    let resp: ProtocolResponse<String> = ProtocolResponse {
                         seq: req.seq,
                         type_field: "response",
                         request_seq: req.seq,
@@ -235,7 +246,7 @@ async fn main() -> Result<()> {
                     writeln!(stdout, "{}", serde_json::to_string(&resp)?)?;
                     continue;
                 }
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -252,7 +263,7 @@ async fn main() -> Result<()> {
                         { "name": "Storage", "variablesReference": 1002, "expensive": true }
                     ]
                 });
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -289,7 +300,7 @@ async fn main() -> Result<()> {
                         _ => {}
                     }
                 } else {
-                    let resp = ProtocolResponse {
+                    let resp: ProtocolResponse<String> = ProtocolResponse {
                         seq: req.seq,
                         type_field: "response",
                         request_seq: req.seq,
@@ -300,7 +311,7 @@ async fn main() -> Result<()> {
                     writeln!(stdout, "{}", serde_json::to_string(&resp)?)?;
                     continue;
                 }
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -317,7 +328,7 @@ async fn main() -> Result<()> {
                         storage.push(serde_json::json!({ "key": key, "value": val }));
                     }
                 }
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -337,7 +348,7 @@ async fn main() -> Result<()> {
                         "remaining": 4_000_000 - consumed // Default Arbitrum block gas limit placeholder
                     });
                 }
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -349,7 +360,7 @@ async fn main() -> Result<()> {
             }
             "disconnect" => {
                 let body = serde_json::json!({ "status": "bye" });
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,
@@ -361,7 +372,7 @@ async fn main() -> Result<()> {
                 break;
             }
             _ => {
-                let resp = ProtocolResponse {
+                let resp: ProtocolResponse<serde_json::Value> = ProtocolResponse {
                     seq: req.seq,
                     type_field: "response",
                     request_seq: req.seq,

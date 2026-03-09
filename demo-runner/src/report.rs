@@ -20,7 +20,7 @@ pub fn generate_html_report(
             } else {
                 r#"<span class="status-badge fail">FAIL ✗</span>"#
             };
-            let reason = r.failure_reason.as_deref().unwrap_or("—");
+            let _reason = r.failure_reason.as_deref().unwrap_or("—");
             let assertions_html: String = r.assertion_results.iter().map(|a| {
                 let mark = if a.passed { "✓" } else { "✗" };
                 let cls = if a.passed { "pass" } else { "fail" };

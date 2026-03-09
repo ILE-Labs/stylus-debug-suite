@@ -30,8 +30,7 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let source = fs::read_to_string(&cli.input)
-        .map_err(|e| anyhow::anyhow!("failed to read {}: {e}", cli.input.display()))?;
+    // Pattern detection
 
     let detected = detect_patterns(&cli.input);
 
@@ -63,11 +62,11 @@ fn print_text_report(cli: &Cli, detected: &[patterns::DetectedPattern]) {
     let mut grouped: Vec<(&str, Vec<&patterns::DetectedPattern>)> = Vec::new();
 
     for p in detected {
-        if let Some(pos) = seen_ids.iter().position(|id| *id == p.pattern_id) {
+        if let Some(pos) = seen_ids.iter().position(|id| **id == p.pattern_id) {
             grouped[pos].1.push(p);
         } else {
-            seen_ids.push(p.pattern_id);
-            grouped.push((p.pattern_id, vec![p]));
+            seen_ids.push(&p.pattern_id);
+            grouped.push((&p.pattern_id, vec![p]));
         }
     }
 

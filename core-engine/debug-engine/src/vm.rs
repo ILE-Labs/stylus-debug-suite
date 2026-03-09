@@ -111,9 +111,8 @@ impl StylusVm {
         let mut linker = Linker::new(&self.engine);
 
         // Host functions for Stylus/EVM environment
-        linker.func_wrap("env", "storage_load", |mut caller: Caller<'_, VmState>, slot: i32| {
+        linker.func_wrap("env", "storage_load", |_caller: Caller<'_, VmState>, _slot: i32| {
             // Placeholder for real storage load
-            println!("Storage load from slot {slot}");
         })?;
 
         self.instance = Some(linker.instantiate(&mut self.store, &module)?);
@@ -229,13 +228,11 @@ impl StylusVm {
                 self.store.data_mut().stack.push(value);
                 self.emit("SLOAD", gas, vec![], source);
             }
-
             Instruction::Call { target } => {
                 self.emit("CALL", GasCost::CALL, vec![], source);
                 let frame = format!("call:{target}");
                 self.store.data_mut().memory.extend_from_slice(frame.as_bytes());
             }
-
             Instruction::Log { topic } => {
                 self.store.data_mut().memory.extend_from_slice(topic.as_bytes());
                 self.emit("LOG", GasCost::LOG, vec![], source);
@@ -268,7 +265,6 @@ impl StylusVm {
                     self.store.data_mut().stack.push(format!("0x{:X}", b));
                 }
             }
-
             Instruction::Transfer { to } => {
                 let _amount = self.store.data_mut().stack.pop().unwrap_or("0x00".into());
                 self.store.data_mut().memory.extend_from_slice(format!("transfer:{to}").as_bytes());
