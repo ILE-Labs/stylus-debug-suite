@@ -15,8 +15,9 @@ resolver = "2"
 [workspace.package]
 edition = "2021"
 license = "MIT"
-authors = ["Stylus Debug Suite"]
-repository = ""
+authors = ["ILE Labs <contact@ilelabs.com>"]
+repository = "https://github.com/ILE-Labs/stylus-debug-suite"
+publish = false
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }

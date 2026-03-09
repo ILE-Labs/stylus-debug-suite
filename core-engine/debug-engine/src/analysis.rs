@@ -147,7 +147,7 @@ fn check_unchecked_calls(trace: &[ExecutionEvent], findings: &mut Vec<SecurityFi
 
 /// State update before transfer: SSTORE followed by value-transfer CALL.
 /// This is the classic "send ETH then update state" anti-pattern.
-fn check_storage_before_transfer(trace: &[ExecutionEvent], findings: &mut Vec<SecurityFinding>) {
+pub fn check_storage_before_transfer(trace: &[ExecutionEvent], findings: &mut Vec<SecurityFinding>) {
     for (i, ev) in trace.iter().enumerate() {
         if ev.opcode == "SSTORE" {
             // Look at the next few events for a value-transfer CALL
@@ -229,7 +229,7 @@ fn check_multiple_storage_writes(trace: &[ExecutionEvent], findings: &mut Vec<Se
 #[cfg(test)]
 mod tests {
     use super::*;
-    use engine_model::{MemorySnapshot, StorageChange, Value};
+    use engine_model::{MemorySnapshot, StorageChange};
 
     fn mock_event(step: u64, opcode: &str, gas: u64, diff: Vec<StorageChange>) -> ExecutionEvent {
         ExecutionEvent {

@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
 
 use anyhow::Result;
-use debug_engine::{DebugConfig, DebugSession, ExecutionEvent, StorageChange};
-use gas_profiler::profile;
+use debug_engine::{DebugConfig, DebugSession, ExecutionEvent};
 use serde::{Deserialize, Serialize};
 
 /// DAP‑shaped protocol message for requests.
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct ProtocolRequest {
     seq: i64,
     #[serde(rename = "type")]
@@ -40,16 +40,6 @@ struct PcToSourceMap {
     map: HashMap<u32, SourceLocation>,
 }
 
-#[derive(Debug, Serialize)]
-struct StorageSlotView {
-    key: String,
-    value: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-struct StorageView {
-    slots: Vec<StorageSlotView>,
-}
 
 impl PcToSourceMap {
     fn new() -> Self {
@@ -71,7 +61,7 @@ fn parse_dwarf(wasm_path: &str) -> Result<PcToSourceMap> {
     let load_section = |id: gimli::SectionId| -> Result<gimli::EndianSlice<'_, gimli::RunTimeEndian>, gimli::Error> {
         let name = id.name();
         match obj_file.section_by_name(name) {
-            Some(section) => Ok(gimli::EndianSlice::new(section.cow_data().as_ref(), gimli::RunTimeEndian::Little)),
+            Some(section) => Ok(gimli::EndianSlice::new(section.data().unwrap_or(&[]), gimli::RunTimeEndian::Little)),
             None => Ok(gimli::EndianSlice::new(&[], gimli::RunTimeEndian::Little)),
         }
     };
@@ -89,9 +79,14 @@ fn parse_dwarf(wasm_path: &str) -> Result<PcToSourceMap> {
                     continue;
                 }
                 if let Some(file_entry) = row.file(header) {
-                    let file_name = dwarf_sections.attr_string(&unit, file_entry.path_name())?
-                        .to_string_lossy()
-                        .into_owned();
+                    let path_attr = file_entry.path_name();
+                    let file_name = match path_attr {
+                        gimli::AttributeValue::DebugStrRef(offset) => {
+                            dwarf_sections.debug_str.get_str(offset).map(|s| s.to_string_lossy().into_owned()).unwrap_or("unknown".into())
+                        }
+                        gimli::AttributeValue::String(s) => s.to_string_lossy().into_owned(),
+                        _ => "unknown".into(),
+                    };
                     pc_to_source.map.insert(row.address() as u32, SourceLocation {
                         file: file_name,
                         line: row.line().map(|l| l.get() as i64).unwrap_or(0),
@@ -108,7 +103,6 @@ fn parse_dwarf(wasm_path: &str) -> Result<PcToSourceMap> {
     Ok(pc_to_source)
 }
 
-type DefaultCow<'a> = std::borrow::Cow<'a, [u8]>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -389,25 +383,3 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
-
-fn build_storage_view(trace: Option<&Vec<ExecutionEvent>>) -> StorageView {
-    let mut map: HashMap<String, Option<String>> = HashMap::new();
-
-    if let Some(events) = trace {
-        for event in events {
-            for StorageChange { key, old: _, new } in &event.storage_diff {
-                map.insert(key.clone(), new.clone());
-            }
-        }
-    }
-
-    let slots = map
-        .into_iter()
-        .map(|(key, value)| StorageSlotView { key, value })
-        .collect();
-
-    StorageView { slots }
-}
-
-
-

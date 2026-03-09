@@ -1,6 +1,6 @@
 mod patterns;
 
-use std::fs;
+
 use std::path::PathBuf;
 
 use anyhow::Result;

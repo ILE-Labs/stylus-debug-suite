@@ -8,7 +8,7 @@ name = "debug_engine"
 path = "src/lib.rs"
 
 [[bin]]
-name = "stylus-debug"
+name = "debug-engine-cli"
 path = "src/main.rs"
 
 [dependencies]

@@ -3,7 +3,8 @@ use std::io::{self, BufRead, Write};
 use anyhow::Result;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use debug_engine::{DebugConfig, DebugSession, ExecutionEvent, StorageChange};
+use debug_engine::DebugSession;
+use engine_model::DebugConfig;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct SourceLocation {
@@ -12,10 +13,12 @@ pub struct SourceLocation {
     pub column: i64,
 }
 
+#[allow(dead_code)]
 pub struct PcToSourceMap {
     pub map: HashMap<u32, SourceLocation>,
 }
 
+#[allow(dead_code)]
 impl PcToSourceMap {
     pub fn new() -> Self {
         Self { map: HashMap::new() }
@@ -25,6 +28,7 @@ impl PcToSourceMap {
     }
 }
 
+#[allow(dead_code)]
 pub fn parse_dwarf(wasm_path: &std::path::Path) -> Result<PcToSourceMap> {
     use object::{Object, ObjectSection};
     use std::fs;
@@ -35,7 +39,7 @@ pub fn parse_dwarf(wasm_path: &std::path::Path) -> Result<PcToSourceMap> {
     let load_section = |id: gimli::SectionId| -> Result<gimli::EndianSlice<'_, gimli::RunTimeEndian>, gimli::Error> {
         let name = id.name();
         match obj_file.section_by_name(name) {
-            Some(section) => Ok(gimli::EndianSlice::new(section.cow_data().as_ref(), gimli::RunTimeEndian::Little)),
+            Some(section) => Ok(gimli::EndianSlice::new(section.data().unwrap_or(&[]), gimli::RunTimeEndian::Little)),
             None => Ok(gimli::EndianSlice::new(&[], gimli::RunTimeEndian::Little)),
         }
     };
@@ -51,9 +55,14 @@ pub fn parse_dwarf(wasm_path: &std::path::Path) -> Result<PcToSourceMap> {
             while let Some((header, row)) = rows.next_row()? {
                 if row.end_sequence() { continue; }
                 if let Some(file_entry) = row.file(header) {
-                    let file_name = dwarf_sections.attr_string(&unit, file_entry.path_name())?
-                        .to_string_lossy()
-                        .into_owned();
+                    let path_attr = file_entry.path_name();
+                    let file_name = match path_attr {
+                        gimli::AttributeValue::DebugStrRef(offset) => {
+                            dwarf_sections.debug_str.get_str(offset).map(|s| s.to_string_lossy().into_owned()).unwrap_or("unknown".into())
+                        }
+                        gimli::AttributeValue::String(s) => s.to_string_lossy().into_owned(),
+                        _ => "unknown".into(),
+                    };
                     pc_to_source.map.insert(row.address() as u32, SourceLocation {
                         file: file_name,
                         line: row.line().map(|l| l.get() as i64).unwrap_or(0),
@@ -77,6 +86,7 @@ pub struct AdapterArgs {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct ProtocolRequest {
     seq: i64,
     #[serde(rename = "type")]
@@ -102,7 +112,7 @@ pub async fn run(_args: AdapterArgs) -> Result<()> {
     let mut stdout = io::stdout();
 
     let mut active_session: Option<DebugSession> = None;
-    let mut pc_map = PcToSourceMap::new();
+    let _pc_map = PcToSourceMap::new();
 
     for line in stdin.lock().lines() {
         let line = line?;

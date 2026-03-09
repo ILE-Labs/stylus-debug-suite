@@ -1,11 +1,13 @@
-use debug_engine::{ExecutionEvent, StorageChange};
+use debug_engine::ExecutionEvent;
 
+#[allow(dead_code)]
 pub struct AssertionResult {
     pub name: String,
     pub passed: bool,
     pub detail: String,
 }
 
+#[allow(dead_code)]
 pub struct ScenarioResult {
     pub scenario_name: String,
     pub success: bool,

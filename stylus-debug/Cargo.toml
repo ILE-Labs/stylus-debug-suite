@@ -4,8 +4,17 @@ version = "0.1.0"
 edition = "2021"
 description = "A comprehensive debug and migration toolkit for Arbitrum Stylus (Rust-based smart contracts)."
 license = "MIT"
-authors = ["Stylus Debug Suite Developers"]
+authors = ["ILE Labs <contact@ilelabs.com>"]
 repository = "https://github.com/ILE-Labs/stylus-debug-suite"
+homepage = "https://github.com/ILE-Labs/stylus-debug-suite"
+readme = "../README.md"
+keywords = ["arbitrum", "stylus", "debug", "wasm", "smart-contracts"]
+categories = ["command-line-utilities", "development-tools::debugging"]
+exclude = ["tests/", "examples/"]
+
+[[bin]]
+name = "stylus-debug"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = { workspace = true }
@@ -18,11 +27,7 @@ indicatif = { workspace = true }
 gimli = "0.27"
 object = "0.30"
 
-# Internal workspace references for modular logic
+# Internal workspace crates
 debug-engine = { path = "../core-engine/debug-engine" }
 gas-profiler = { path = "../core-engine/gas-profiler" }
 engine-model = { path = "../core-engine/model" }
-
-# We'll pull in the main logic from other crates as modules or depend on them
-# For now, let's keep it simple and depend on the library parts if we extract them.
-# Or just copy the logic into modules here for a shared binary.

@@ -2,7 +2,6 @@ use anyhow::Result;
 use clap::Parser;
 use colored::*;
 use debug_engine::{DebugSession, DebugConfig};
-use engine_model::VmState;
 
 pub mod report;
 
