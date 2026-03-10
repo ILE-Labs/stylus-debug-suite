@@ -2,7 +2,7 @@
 
 A comprehensive toolkit for Arbitrum Stylus (Rust-based smart contracts) development, debugging, and migration.
 
-Built by [ILE Labs](https://ilelabs.com).
+Built by [ILE Labs](https://ilelabs.org).
 
 ## Table of Contents
 
