@@ -1,6 +1,6 @@
 [package]
 name = "stylus-debug"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A comprehensive debug and migration toolkit for Arbitrum Stylus (Rust-based smart contracts)."
 license = "MIT"
@@ -29,6 +29,6 @@ gimli = "0.27"
 object = "0.30"
 
 # Internal workspace crates
-debug-engine = { version = "0.1.0", path = "../core-engine/debug-engine" }
-gas-profiler = { version = "0.1.0", path = "../core-engine/gas-profiler" }
-engine-model = { version = "0.1.0", path = "../core-engine/model" }
+debug-engine = { version = "0.1.1", path = "../core-engine/debug-engine" }
+gas-profiler = { version = "0.1.1", path = "../core-engine/gas-profiler" }
+engine-model = { version = "0.1.1", path = "../core-engine/model" }

@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, CommandFactory};
 use anyhow::Result;
 
 mod migrate;
@@ -9,7 +9,7 @@ mod demo;
 #[command(name = "stylus-debug", version, about = "Stylus Debug Suite CLI")]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -27,9 +27,13 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Migrate(args) => migrate::run(args).await?,
-        Commands::Adapter(args) => adapter::run(args).await?,
-        Commands::Demo(args) => demo::run(args).await?,
+        Some(Commands::Migrate(args)) => migrate::run(args).await?,
+        Some(Commands::Adapter(args)) => adapter::run(args).await?,
+        Some(Commands::Demo(args)) => demo::run(args).await?,
+        None => {
+            Cli::command().print_help()?;
+            println!();
+        }
     }
 
     Ok(())

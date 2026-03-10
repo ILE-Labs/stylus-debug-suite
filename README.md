@@ -117,17 +117,17 @@ async fn main() -> anyhow::Result<()> {
 
 ## Feature Details
 
-### 🛡️ Security Analysis
+###  Security Analysis
 Automatically detects 5 core vulnerability patterns in execution traces:
 - **Reentrancy**: External `CALL` after `SSTORE` without a guard.
 - **Unchecked Calls**: `CALL` operations not followed by status checks.
 - **CEI Violations**: Non-standard Checks-Effects-Interactions flows.
 - **Gas Inefficiencies**: Redundant `SSTORE` and large loops.
 
-### ⛽ Gas Profiling
+###  Gas Profiling
 Provides a breakdown of gas consumption by opcode and contract function, highlighting expensive hotspots and offering Stylus-specific optimizations (e.g., caching storage in memory).
 
-### 🔍 DWARF Debugging
+###  DWARF Debugging
 Leverages `gimli` to parse DWARF debug information from WASM binaries, enabling accurate source-to-PC mapping and a real-world debugging experience.
 
 ## Architecture
